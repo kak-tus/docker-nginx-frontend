@@ -20,4 +20,4 @@ RUN rm /etc/nginx/conf.d/default.conf \
   && unzip consul-template_0.15.0_linux_amd64.zip \
   && rm consul-template_0.15.0_linux_amd64.zip consul-template_0.15.0_SHA256SUMS
 
-RUN consul-template -once -template="/etc/nginx/conf.d/services.conf.template:/etc/nginx/conf.d/services.conf" ; nginx -g 'daemon off;'
+CMD consul-template -once -template="/etc/nginx/conf.d/services.conf.template:/etc/nginx/conf.d/services.conf" ; nginx -g 'daemon off;'
