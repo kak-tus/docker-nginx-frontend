@@ -1,0 +1,19 @@
+{{range $service_name := plugin "all_services.pl" "need-nginx" | split "\n" }}
+upstream  {{$service_name}}-upstream  {
+{{if service $service_name}}{{range $service := service $service_name}}
+  server {{$service.Address}}:{{$service.Port}};{{end}}{{end}}
+  server {{$service_name}}.weave.local:{{key (printf "config/%s/port" $service_name)}}{{if service $service_name}} backup{{end}};
+}
+{{end}}
+
+{{range $service_name := plugin "all_services.pl" "need-nginx" | split "\n" }}
+server {
+  server_name {{key (printf "config/%s/nginx/server_name" $service_name)}};
+  listen 80;
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_pass http://{{$service_name}}-upstream;
+  }
+}
+{{end}}
