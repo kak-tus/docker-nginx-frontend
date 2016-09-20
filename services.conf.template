@@ -13,5 +13,12 @@ server {
     proxy_set_header Host $host;
     proxy_pass http://{{$service_name}}-upstream;
   }
+
+  location /.well-known/acme-challenge/ {
+    resolver 172.18.0.1;
+    set $simp_le_endpoint http://simp_le.weave.local:9002;
+
+    proxy_pass $simp_le_endpoint;
+  }
 }
 {{end}}
