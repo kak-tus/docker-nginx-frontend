@@ -16,8 +16,9 @@ server {
 
   location /.well-known/acme-challenge/ {
     resolver 172.18.0.1;
-    set $simp_le_endpoint http://prepodam.ru;
+    set $simp_le_endpoint http://simp-le.weave.local:9002;
 
+    proxy_set_header Host $host;
     proxy_pass $simp_le_endpoint;
   }
 }
