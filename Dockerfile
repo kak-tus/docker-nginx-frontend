@@ -10,8 +10,7 @@ RUN rm /etc/nginx/conf.d/default.conf \
 
   && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y \
-  curl unzip libcommon-sense-perl libwww-perl libcpanel-json-xs-perl \
-  liblist-moreutils-perl \
+  curl unzip libwww-perl liblist-moreutils-perl \
 
   && cd /usr/local/bin \
 
