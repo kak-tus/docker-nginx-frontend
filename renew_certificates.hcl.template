@@ -1,0 +1,11 @@
+template {
+  source = "/root/{{env "CERT_HOST"}}fullchain.pem.template"
+  destination = "/etc/nginx/certificates/{{env "CERT_HOST"}}fullchain.pem"
+  perms = 0700
+}
+
+template {
+  source = "/root/{{env "CERT_HOST"}}key.pem.template"
+  destination = "/etc/nginx/certificates/{{env "CERT_HOST"}}key.pem"
+  perms = 0700
+}

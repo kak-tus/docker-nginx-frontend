@@ -1,0 +1,6 @@
+template {
+  source = "/root/get_certificates.sh.template"
+  destination = "/root/get_certificates.sh"
+  perms = 0700
+  command = "/root/get_certificates.sh"
+}
