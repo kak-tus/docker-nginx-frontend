@@ -2,5 +2,9 @@ template {
   source = "/root/get_certificates.sh.template"
   destination = "/root/get_certificates.sh"
   perms = 0700
+}
+
+exec {
   command = "/root/get_certificates.sh"
+  splay = "5s"
 }

@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 rm -rf /root/template_parts
 rm -f /root/renew.hcl
 
