@@ -11,6 +11,11 @@ server {
   listen 80;
 
   location / {
+{{if key (printf "config/%s/nginx/restrict" $service_name)}}{{range ls "config/home_ips"}}
+    allow {{.Value}};{{end}}
+    deny all;
+{{end}}
+
     proxy_set_header Host $host;
     proxy_pass http://{{$service_name}}-upstream;
   }
@@ -37,6 +42,11 @@ server {
   ssl_prefer_server_ciphers on;
   # ssl_dhparam dhparams_ticker.pem;
   ssl_session_cache shared:{{$server_name}}:10m;
+
+{{if key (printf "config/%s/nginx/restrict" $service_name)}}{{range ls "config/home_ips"}}
+    allow {{.Value}};{{end}}
+    deny all;
+{{end}}
 
   location / {
     proxy_set_header Host $host;
