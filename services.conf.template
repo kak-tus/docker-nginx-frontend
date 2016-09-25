@@ -1,23 +1,25 @@
-{{range $service_name := plugin "all_services.pl" "need-nginx" | split "\n" }}
-upstream  {{$service_name}}-upstream  {
-{{if service $service_name}}{{range $service := service $service_name}}
-  server {{$service.Address}}:{{$service.Port}};{{end}}{{end}}
-  server {{$service_name}}.weave.local:{{key (printf "config/%s/port" $service_name)}}{{if service $service_name}} backup{{end}};
+{{plugin "skip.sh"}}
+
+{{range $dc := datacenters}}{{range $services := services (printf "@%s" $dc)}}{{range $service := service (printf "%s@%s" $services.Name $dc)}}{{if $service.Tags | contains "need-nginx"}}{{if plugin "skip.sh" $service.Name }}
+upstream  {{$service.Name}}-upstream  {
+{{if service $service.Name}}{{range $service_local := service $service.Name}}
+  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}{{end}}
+  server {{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}}{{if service $service.Name}} backup{{end}};
 }
 
-{{$server_name := key (printf "config/%s/nginx/server_name" $service_name)}}
+{{$server_name := key (printf "config/%s/nginx/server_name" $service.Name)}}
 server {
   server_name {{$server_name}};
   listen 80;
 
   location / {
-{{if key (printf "config/%s/nginx/restrict" $service_name)}}{{range ls "config/home_ips"}}
+{{if key (printf "config/%s/nginx/restrict" $service.Name)}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
     deny all;
 {{end}}
 
     proxy_set_header Host $host;
-    proxy_pass http://{{$service_name}}-upstream;
+    proxy_pass http://{{$service.Name}}-upstream;
   }
 
   location /.well-known/acme-challenge/ {
@@ -29,8 +31,7 @@ server {
   }
 }
 
-{{range $cert_host := secrets (printf "%s/" (env "VAULT_PATH"))}}
-{{if eq $cert_host (printf "%s/" $server_name)}}
+{{range $cert_host := secrets (printf "%s/" (env "VAULT_PATH"))}}{{if eq $cert_host (printf "%s/" $server_name)}}
 server {
   server_name {{$server_name}};
   listen 443 ssl;
@@ -43,15 +44,15 @@ server {
   # ssl_dhparam dhparams_ticker.pem;
   ssl_session_cache shared:{{$server_name}}:10m;
 
-{{if key (printf "config/%s/nginx/restrict" $service_name)}}{{range ls "config/home_ips"}}
+{{if key (printf "config/%s/nginx/restrict" $service.Name)}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
     deny all;
 {{end}}
 
   location / {
     proxy_set_header Host $host;
-    proxy_pass http://{{$service_name}}-upstream;
+    proxy_pass http://{{$service.Name}}-upstream;
   }
 }
 {{end}}{{end}}
-{{end}}
+{{end}}{{end}}{{end}}{{end}}{{end}}
