@@ -1,11 +1,13 @@
 {{plugin "skip.sh"}}
 
 {{range $dc := datacenters}}{{range $services := services (printf "@%s" $dc)}}{{range $service := service (printf "%s@%s" $services.Name $dc)}}{{if $service.Tags | contains "need-nginx"}}{{if plugin "skip.sh" $service.Name }}
+
+{{if service $service.Name}}
 upstream  {{$service.Name}}-upstream  {
-{{if service $service.Name}}{{range $service_local := service $service.Name}}
-  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}{{end}}
-  server {{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}}{{if service $service.Name}} backup{{end}};
+{{range $service_local := service $service.Name}}
+  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}
 }
+{{end}}
 
 {{$server_name := key (printf "config/%s/nginx/server_name" $service.Name)}}
 server {
@@ -19,7 +21,14 @@ server {
 {{end}}
 
     proxy_set_header Host $host;
+
+{{if service $service.Name}}
     proxy_pass http://{{$service.Name}}-upstream;
+{{else}}
+    resolver 172.18.0.1;
+    set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
+    proxy_pass $endpoint;
+{{end}}
   }
 
   location /.well-known/acme-challenge/ {
@@ -51,7 +60,14 @@ server {
 
   location / {
     proxy_set_header Host $host;
+
+{{if service $service.Name}}
     proxy_pass http://{{$service.Name}}-upstream;
+{{else}}
+    resolver 172.18.0.1;
+    set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
+    proxy_pass $endpoint;
+{{end}}
   }
 }
 {{end}}{{end}}
