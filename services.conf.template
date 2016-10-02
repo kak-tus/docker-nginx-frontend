@@ -14,6 +14,10 @@ server {
   server_name {{$server_name}};
   listen 80;
 
+{{if ne (key_or_default (printf "config/%s/nginx/client_max_body_size" $service.Name) "0") "0"}}
+  client_max_body_size {{key (printf "config/%s/nginx/client_max_body_size" $service.Name)}};
+{{end}}
+
   location / {
 {{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
@@ -52,6 +56,10 @@ server {
   ssl_prefer_server_ciphers on;
   # ssl_dhparam dhparams_ticker.pem;
   ssl_session_cache shared:{{$server_name}}:10m;
+
+{{if ne (key_or_default (printf "config/%s/nginx/client_max_body_size" $service.Name) "0") "0"}}
+  client_max_body_size {{key (printf "config/%s/nginx/client_max_body_size" $service.Name)}};
+{{end}}
 
 {{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
