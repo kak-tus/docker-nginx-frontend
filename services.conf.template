@@ -15,7 +15,7 @@ server {
   listen 80;
 
   location / {
-{{if key (printf "config/%s/nginx/restrict" $service.Name)}}{{range ls "config/home_ips"}}
+{{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
     deny all;
 {{end}}
@@ -53,7 +53,7 @@ server {
   # ssl_dhparam dhparams_ticker.pem;
   ssl_session_cache shared:{{$server_name}}:10m;
 
-{{if key (printf "config/%s/nginx/restrict" $service.Name)}}{{range ls "config/home_ips"}}
+{{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
     deny all;
 {{end}}
