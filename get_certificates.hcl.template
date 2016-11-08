@@ -1,5 +1,4 @@
 max_stale = "2m"
-wait = "30s:60s"
 
 deduplicate {
   enabled = true

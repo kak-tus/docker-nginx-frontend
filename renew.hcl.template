@@ -1,5 +1,4 @@
 max_stale = "2m"
-wait = "30s:60s"
 
 deduplicate {
   enabled = true
@@ -15,4 +14,5 @@ template {
 exec {
   command = "nginx -g 'daemon off;'"
   splay = "60s"
+  reload_signal = "SIGHUP"
 }
