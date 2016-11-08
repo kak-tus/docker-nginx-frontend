@@ -1,11 +1,11 @@
 {{plugin "skip.sh"}}
 
-{{range $dc := datacenters}}{{range $services := services (printf "@%s" $dc)}}{{range $service := service (printf "%s@%s" $services.Name $dc)}}{{if $service.Tags | contains "need-nginx"}}{{if plugin "skip.sh" $service.Name }}
+{{range $dc := datacenters}}{{range $services := services (printf "@%s" $dc)}}{{range $service := service (printf "%s@%s" $services.Name $dc)}}{{if $service.Tags | contains "need-nginx"}}{{if plugin "skip.sh" $service.Name }}{{if ne (key_or_default (printf "config/%s/nginx/server_name" $service.Name) "0") "0"}}
 
 {{if service $service.Name}}
 upstream  {{$service.Name}}-upstream  {
-{{range $service_local := service $service.Name}}
-  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}
+{{range $service_local := service $service.Name}}{{if gt $service_local.Port 0}}
+  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}{{end}}
 }
 {{end}}
 
@@ -19,6 +19,7 @@ server {
 {{end}}
 
   location / {
+{{if eq (key_or_default (printf "config/%s/nginx/only_ssl" $service.Name) "0") "0"}}
 {{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
     allow {{.Value}};{{end}}
     deny all;
@@ -28,10 +29,13 @@ server {
 
 {{if service $service.Name}}
     proxy_pass http://{{$service.Name}}-upstream;
-{{else}}
+{{else}}{{if ne (key_or_default (printf "config/%s/port" $service.Name) "0") "0"}}
     resolver 172.18.0.1;
     set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
     proxy_pass $endpoint;
+{{end}}{{end}}
+{{else}}
+  return 301 https://{{$server_name}}$request_uri;
 {{end}}
   }
 
@@ -71,12 +75,12 @@ server {
 
 {{if service $service.Name}}
     proxy_pass http://{{$service.Name}}-upstream;
-{{else}}
+{{else}}{{if ne (key_or_default (printf "config/%s/port" $service.Name) "0") "0"}}
     resolver 172.18.0.1;
     set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
     proxy_pass $endpoint;
-{{end}}
+{{end}}{{end}}
   }
 }
 {{end}}{{end}}
-{{end}}{{end}}{{end}}{{end}}{{end}}
+{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}
