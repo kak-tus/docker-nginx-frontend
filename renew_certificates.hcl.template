@@ -9,3 +9,9 @@ template {
   destination = "/etc/nginx/certificates/{{env "CERT_HOST"}}key.pem"
   perms = 0700
 }
+
+template {
+  source = "/root/{{env "CERT_HOST"}}dhparams.pem.template"
+  destination = "/etc/nginx/certificates/{{env "CERT_HOST"}}dhparams.pem"
+  perms = 0700
+}

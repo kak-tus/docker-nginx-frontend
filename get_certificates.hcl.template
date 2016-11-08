@@ -1,3 +1,11 @@
+max_stale = "2m"
+wait = "30s:60s"
+
+deduplicate {
+  enabled = true
+  prefix = "service/consul-template/dedup/"
+}
+
 template {
   source = "/root/get_certificates.sh.template"
   destination = "/root/get_certificates.sh"
@@ -6,5 +14,5 @@ template {
 
 exec {
   command = "/root/get_certificates.sh"
-  splay = "5s"
+  splay = "60s"
 }

@@ -1,3 +1,11 @@
+max_stale = "2m"
+wait = "30s:60s"
+
+deduplicate {
+  enabled = true
+  prefix = "service/consul-template/dedup/"
+}
+
 template {
   source = "/root/services.conf.template"
   destination = "/etc/nginx/conf.d/services.conf"
@@ -6,5 +14,5 @@ template {
 
 exec {
   command = "nginx -g 'daemon off;'"
-  splay = "5s"
+  splay = "60s"
 }

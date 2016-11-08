@@ -18,6 +18,8 @@ COPY key.pem.template /root/key.pem.template
 COPY key_renew.pem.template /root/key_renew.pem.template
 COPY renew.hcl.template /root/renew.hcl.template
 COPY renew_certificates.hcl.template /root/renew_certificates.hcl.template
+COPY dhparams.pem.template /root/dhparams.pem.template
+COPY fullchain_renew.pem.template /root/fullchain_renew.pem.template
 
 RUN rm /etc/nginx/conf.d/default.conf \
   && mkdir -p /etc/nginx/certificates \
