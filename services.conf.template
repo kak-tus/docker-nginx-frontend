@@ -53,6 +53,18 @@ server {
   server_name {{$server_name}};
   listen 443 ssl;
 
+  {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ end }}
+
+  {{ with secret ( printf "%s/%skey" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ end }}
+
+  {{ with secret ( printf "%s/%sdhparams" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ end }}
+
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
   ssl_certificate /etc/nginx/certificates/{{$server_name}}/fullchain.pem;
   ssl_certificate_key /etc/nginx/certificates/{{$server_name}}/key.pem;

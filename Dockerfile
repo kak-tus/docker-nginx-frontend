@@ -10,16 +10,8 @@ ENV VAULT_PATH=secret/certificates
 COPY services.conf.template /root/services.conf.template
 COPY consul-template_0.16.0_SHA256SUMS /usr/local/bin/consul-template_0.16.0_SHA256SUMS
 COPY skip.sh /usr/local/bin/skip.sh
-COPY get_certificates.hcl.template /root/get_certificates.hcl.template
-COPY get_certificates.sh.template /root/get_certificates.sh.template
-COPY fullchain.pem.template /root/fullchain.pem.template
-COPY fullchain_renew.pem.template /root/fullchain_renew.pem.template
-COPY key.pem.template /root/key.pem.template
-COPY key_renew.pem.template /root/key_renew.pem.template
-COPY renew.hcl.template /root/renew.hcl.template
-COPY renew_certificates.hcl.template /root/renew_certificates.hcl.template
-COPY dhparams.pem.template /root/dhparams.pem.template
-COPY fullchain_renew.pem.template /root/fullchain_renew.pem.template
+COPY nginx.hcl /root/nginx.hcl
+COPY store.sh /usr/local/bin/store.sh
 
 RUN rm /etc/nginx/conf.d/default.conf \
   && mkdir -p /etc/nginx/certificates \
@@ -37,4 +29,4 @@ RUN rm /etc/nginx/conf.d/default.conf \
 
   && apt-get remove -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-CMD consul-template -config /root/get_certificates.hcl.template
+CMD consul-template -config /root/nginx.hcl
