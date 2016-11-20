@@ -8,7 +8,6 @@ deduplicate {
 template {
   source = "/root/services.conf.template"
   destination = "/etc/nginx/conf.d/services.conf"
-  perms = 0700
 }
 
 exec {
