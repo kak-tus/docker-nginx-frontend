@@ -1,10 +1,5 @@
 max_stale = "2m"
 
-deduplicate {
-  enabled = true
-  prefix = "service/consul-template/dedup/"
-}
-
 template {
   source = "/root/services.conf.template"
   destination = "/etc/nginx/conf.d/services.conf"
