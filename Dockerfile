@@ -27,6 +27,8 @@ RUN rm /etc/nginx/conf.d/default.conf \
   && unzip consul-template_0.16.0_linux_amd64.zip \
   && rm consul-template_0.16.0_linux_amd64.zip consul-template_0.16.0_SHA256SUMS \
 
-  && apt-get remove -y curl unzip && rm -rf /var/lib/apt/lists/*
+  && apt-get remove -y curl unzip && rm -rf /var/lib/apt/lists/* \
+
+  && mkdir -p /var/lib/nginx/cache
 
 CMD consul-template -config /root/nginx.hcl
