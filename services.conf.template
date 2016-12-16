@@ -1,4 +1,4 @@
-{{plugin "skip.sh"}}
+{{ plugin "skip.sh" }}
 
 proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=nginx_cache:30m inactive=30d max_size=1G;
 
@@ -8,58 +8,70 @@ server {
   return 444;
 }
 
-{{range $dc := datacenters}}{{range $services := services (printf "@%s" $dc)}}{{range $service := service (printf "%s@%s" $services.Name $dc)}}{{if $service.Tags | contains "need-nginx"}}{{if plugin "skip.sh" $service.Name }}
+resolver 172.18.0.1;
 
-{{if service $service.Name}}
-upstream  {{$service.Name}}-upstream  {
-{{range $service_local := service $service.Name}}{{if gt $service_local.Port 0}}
-  server {{$service_local.Address}}:{{$service_local.Port}};{{end}}{{end}}
+{{ range $dc := datacenters }}
+{{ range $services := services ( printf "@%s" $dc ) }}
+{{ range $service := service ( printf "%s@%s" $services.Name $dc ) }}
+{{ if $service.Tags | contains "need-nginx" }}
+{{ if plugin "skip.sh" $service.Name }}
+
+upstream {{ $service.Name }}-upstream  {
+{{ if service $service.Name }}
+{{ range $service_local := service $service.Name }}
+{{ if gt $service_local.Port 0 }}
+  server {{ $service_local.Address }}:{{ $service_local.Port }};
+{{ end }}
+{{ end }}
+{{ if ne ( key_or_default ( printf "config/%s/port" $service.Name ) "0" ) "0" }}
+  server {{ $service.Name }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }} backup;
+{{ end }}
+{{ else }}
+{{ if ne ( key_or_default ( printf "config/%s/port" $service.Name ) "0" ) "0" }}
+  server {{ $service.Name }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }};
+{{ end }}
+{{ end }}
 }
-{{end}}
 
-{{if ne (key_or_default (printf "config/%s/nginx/server_name" $service.Name) "0") "0"}}
-{{$server_name := key (printf "config/%s/nginx/server_name" $service.Name)}}
+{{ if ne ( key_or_default ( printf "config/%s/nginx/server_name" $service.Name ) "0" ) "0" }}
+{{ $server_name := key ( printf "config/%s/nginx/server_name" $service.Name ) }}
 server {
-  server_name {{$server_name}};
+  server_name {{ $server_name }};
   listen 80;
 
-{{if ne (key_or_default (printf "config/%s/nginx/client_max_body_size" $service.Name) "0") "0"}}
-  client_max_body_size {{key (printf "config/%s/nginx/client_max_body_size" $service.Name)}};
-{{end}}
+{{ if ne ( key_or_default ( printf "config/%s/nginx/client_max_body_size" $service.Name ) "0" ) "0" }}
+  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }};
+{{ end }}
 
   location / {
-{{if eq (key_or_default (printf "config/%s/nginx/only_ssl" $service.Name) "0") "0"}}
-{{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
-    allow {{.Value}};{{end}}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/only_ssl" $service.Name ) "0" ) "0" }}
+
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+    allow {{ .Value }};
+{{ end }}
     deny all;
-{{end}}
+{{ end }}
 
     proxy_set_header Host $host;
+    proxy_pass http://{{ $service.Name }}-upstream;
 
-{{if service $service.Name}}
-    proxy_pass http://{{$service.Name}}-upstream;
-{{else}}{{if ne (key_or_default (printf "config/%s/port" $service.Name) "0") "0"}}
-    resolver 172.18.0.1;
-    set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
-    proxy_pass $endpoint;
-{{end}}{{end}}
-{{else}}
-  return 301 https://{{$server_name}}$request_uri;
-{{end}}
+{{ else }}
+  return 301 https://{{ $server_name }}$request_uri;
+{{ end }}
   }
 
   location /.well-known/acme-challenge/ {
-    resolver 172.18.0.1;
     set $simp_le_endpoint http://simp-le.weave.local:80;
-
     proxy_set_header Host $host;
     proxy_pass $simp_le_endpoint;
   }
 }
 
-{{range $cert_host := secrets (printf "%s/" (env "VAULT_PATH"))}}{{if eq $cert_host (printf "%s/" $server_name)}}
+{{ range $cert_host := secrets ( printf "%s/" ( env "VAULT_PATH" ) ) }}
+{{ if eq $cert_host ( printf "%s/" $server_name ) }}
 server {
-  server_name {{$server_name}};
+  server_name {{ $server_name }};
   listen 443 ssl;
 
   {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
@@ -75,36 +87,31 @@ server {
   {{ end }}
 
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-  ssl_certificate /etc/nginx/certificates/{{$server_name}}/fullchain.pem;
-  ssl_certificate_key /etc/nginx/certificates/{{$server_name}}/key.pem;
+  ssl_certificate /etc/nginx/certificates/{{ $server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/nginx/certificates/{{ $server_name }}/key.pem;
   ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
   ssl_prefer_server_ciphers on;
-  ssl_dhparam /etc/nginx/certificates/{{$server_name}}/dhparams.pem;
-  ssl_session_cache shared:{{$server_name}}:10m;
+  ssl_dhparam /etc/nginx/certificates/{{ $server_name }}/dhparams.pem;
+  ssl_session_cache shared:{{ $server_name }}:10m;
 
-{{if ne (key_or_default (printf "config/%s/nginx/client_max_body_size" $service.Name) "0") "0"}}
-  client_max_body_size {{key (printf "config/%s/nginx/client_max_body_size" $service.Name)}};
-{{end}}
+{{ if ne ( key_or_default ( printf "config/%s/nginx/client_max_body_size" $service.Name ) "0" ) "0" }}
+  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }};
+{{ end }}
 
-{{if eq (key_or_default (printf "config/%s/nginx/restrict" $service.Name) "0") "1"}}{{range ls "config/home_ips"}}
-    allow {{.Value}};{{end}}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+    allow {{ .Value }};
+{{ end }}
     deny all;
-{{end}}
+{{ end }}
 
   location / {
     proxy_set_header Host $host;
-
-{{if service $service.Name}}
-    proxy_pass http://{{$service.Name}}-upstream;
-{{else}}{{if ne (key_or_default (printf "config/%s/port" $service.Name) "0") "0"}}
-    resolver 172.18.0.1;
-    set $endpoint http://{{$service.Name}}.weave.local:{{key (printf "config/%s/port" $service.Name)}};
-    proxy_pass $endpoint;
-{{end}}{{end}}
+    proxy_pass http://{{ $service.Name }}-upstream;
   }
 }
-{{end}}{{end}}
-{{end}}
+{{ end }}{{ end }}
+{{ end }}
 
 {{ range $server_name := ls ( printf "config/%s/nginx/server_names" $service.Name ) }}
 
@@ -120,23 +127,24 @@ server {
   server_name {{ $server_name.Value }};
 {{ end }}
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}{{ range ls "config/home_ips" }}
-    allow {{.Value}};{{end}}
-    deny all;
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+  allow {{ .Value }};
+{{ end }}
+  deny all;
 {{ end }}
 
 {{ if ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) | replaceAll "__UPSTREAM__" ( printf "http://%s-upstream" $service.Name ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
 {{ end }}
 
 {{ if ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service.Name $server_name.Value ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service.Name $server_name.Value ) | replaceAll "__UPSTREAM__" ( printf "http://%s-upstream" $service.Name ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service.Name $server_name.Value ) }}
 {{ end }}
 
   location /.well-known/acme-challenge/ {
-    resolver 172.18.0.1;
+    allow all;
     set $simp_le_endpoint http://simp-le.weave.local:80;
-
     proxy_set_header Host $host;
     proxy_pass $simp_le_endpoint;
   }
@@ -144,7 +152,8 @@ server {
 {{ end }}
 
 {{ if or ( ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) "0" ) "0" ) ( ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service.Name $server_name.Value ) "0" ) "0" ) }}
-{{ range $cert_host := secrets ( printf "%s/" ( env "VAULT_PATH" ) ) }}{{ if eq $cert_host ( printf "%s/" $server_name.Value ) }}
+{{ range $cert_host := secrets ( printf "%s/" ( env "VAULT_PATH" ) ) }}
+{{ if eq $cert_host ( printf "%s/" $server_name.Value ) }}
 server {
   listen 443 ssl;
 
@@ -176,17 +185,19 @@ server {
   ssl_dhparam /etc/nginx/certificates/{{ $server_name.Value }}/dhparams.pem;
   ssl_session_cache shared:{{ $server_name.Value }}:10m;
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}{{ range ls "config/home_ips" }}
-    allow {{.Value}};{{end}}
-    deny all;
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+  allow {{ .Value }};
+{{ end }}
+  deny all;
 {{ end }}
 
 {{ if ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) | replaceAll "__UPSTREAM__" ( printf "http://%s-upstream" $service.Name ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
 {{ end }}
 
 {{ if ne ( key_or_default ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service.Name $server_name.Value ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service.Name $server_name.Value ) | replaceAll "__UPSTREAM__" ( printf "http://%s-upstream" $service.Name ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service.Name $server_name.Value ) }}
 {{ end }}
 
 }
@@ -194,4 +205,4 @@ server {
 
 {{ end }}
 
-{{end}}{{end}}{{end}}{{end}}{{end}}
+{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}
