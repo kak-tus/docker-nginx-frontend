@@ -5,6 +5,13 @@ template {
   destination = "/etc/nginx/conf.d/services.conf"
 }
 
+template {
+  source = "/root/cache.flag.template"
+  destination = "/etc/nginx/cache.flag"
+  command = "find /var/lib/nginx/cache -type f -delete"
+  wait = "1m"
+}
+
 exec {
   command = "nginx -g 'daemon off;'"
   splay = "60s"

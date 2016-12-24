@@ -12,6 +12,7 @@ COPY consul-template_0.16.0_SHA256SUMS /usr/local/bin/consul-template_0.16.0_SHA
 COPY skip.sh /usr/local/bin/skip.sh
 COPY nginx.hcl /root/nginx.hcl
 COPY store.sh /usr/local/bin/store.sh
+COPY cache.flag.template /root/cache.flag.template
 
 RUN rm /etc/nginx/conf.d/default.conf \
   && mkdir -p /etc/nginx/certificates \
