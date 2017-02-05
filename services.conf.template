@@ -217,8 +217,21 @@ server {
 
 {{ end }}
 
-{{ if ne ( key_or_default ( printf "config/%s/nginx/servers" $service.Name ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/servers" $service.Name ) }}
+{{ range $server := ls ( printf "config/%s/nginx/servers" $service.Name ) }}
+server {
+  access_log /var/log/nginx/access.log my_log;
+
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+  allow {{ .Value }};
+{{ end }}
+  deny all;
+{{ end }}
+
+{{ if ne ( key_or_default ( printf "config/%s/nginx/servers/%s/config" $service.Name $server.Value ) "0" ) "0" }}
+{{ key ( printf "config/%s/nginx/servers/%s/config" $service.Name $server.Value ) }}
+{{ end }}
+}
 {{ end }}
 
 {{ end }}{{ end }}{{ end }}{{ end }}{{ end }}
