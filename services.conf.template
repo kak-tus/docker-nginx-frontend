@@ -28,7 +28,7 @@ upstream {{ $service.Name }}-upstream  {
 {{ end }}
 {{ end }}
 {{ if ne ( key_or_default ( printf "config/%s/port" $service.Name ) "0" ) "0" }}
-  server {{ $service.Name }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }} backup;
+  server {{ if ne ( key_or_default ( printf "config/%s/host" $service.Name ) "0" ) "0" }}{{ key ( printf "config/%s/host" $service.Name ) }}{{ else }}{{ $service.Name }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }} backup;
 {{ end }}
 {{ else }}
 {{ if ne ( key_or_default ( printf "config/%s/port" $service.Name ) "0" ) "0" }}
