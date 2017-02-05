@@ -228,8 +228,8 @@ server {
   deny all;
 {{ end }}
 
-{{ if ne ( key_or_default ( printf "config/%s/nginx/servers/%s/config" $service.Name $server.Value ) "0" ) "0" }}
-{{ key ( printf "config/%s/nginx/servers/%s/config" $service.Name $server.Value ) }}
+{{ if ne ( key_or_default ( printf "config/%s/nginx/server_configs/%s/config" $service.Name $server.Value ) "0" ) "0" }}
+{{ key ( printf "config/%s/nginx/server_configs/%s/config" $service.Name $server.Value ) }}
 {{ end }}
 }
 {{ end }}
