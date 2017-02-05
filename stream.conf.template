@@ -1,0 +1,42 @@
+{{ range $dc := datacenters }}
+{{ range $services := services ( printf "@%s" $dc ) }}
+{{ range $service := service ( printf "%s@%s" $services.Name $dc ) }}
+{{ if $service.Tags | contains "need-nginx" }}
+{{ if not ( scratch.Key ( printf "service_%s_" $service.Name ) ) }}
+
+{{ scratch.Set ( printf "service_%s_" $service.Name ) "1" }}
+
+upstream {{ $service.Name }}-upstream  {
+{{ if service $service.Name }}
+{{ range $service_local := service $service.Name }}
+{{ if gt $service_local.Port 0 }}
+  server {{ $service_local.Address }}:{{ $service_local.Port }};
+{{ end }}
+{{ end }}
+{{ if keyExists ( printf "config/%s/port" $service.Name ) }}
+  server {{ if keyExists ( printf "config/%s/host" $service.Name ) }}{{ key ( printf "config/%s/host" $service.Name ) }}{{ else }}{{ $service.Name }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }} backup;
+{{ end }}
+{{ else }}
+{{ if keyExists ( printf "config/%s/port" $service.Name ) }}
+  server {{ if keyExists ( printf "config/%s/host" $service.Name ) }}{{ key ( printf "config/%s/host" $service.Name ) }}{{ else }}{{ $service.Name }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }};
+{{ end }}
+{{ end }}
+}
+
+{{ range $server := ls ( printf "config/%s/nginx/streams" $service.Name ) }}
+server {
+
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ range ls "config/home_ips" }}
+  allow {{ .Value }};
+{{ end }}
+  deny all;
+{{ end }}
+
+{{ if keyExists ( printf "config/%s/nginx/stream_configs/%s/config" $service.Name $server.Value ) }}
+{{ key ( printf "config/%s/nginx/stream_configs/%s/config" $service.Name $server.Value ) }}
+{{ end }}
+}
+{{ end }}
+
+{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}

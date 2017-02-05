@@ -12,6 +12,11 @@ template {
   wait = "1m"
 }
 
+template {
+  source = "/root/stream.conf.template"
+  destination = "/etc/nginx/stream.conf"
+}
+
 exec {
   command = "nginx -g 'daemon off;'"
   splay = "60s"
