@@ -74,7 +74,7 @@ server {
   }
 }
 
-{{ range $cert_host := secrets ( printf "%s/" ( env "VAULT_PATH" ) ) }}
+{{ range $cert_host := secrets ( printf "%s/" "secret/certificates" ) }}
 {{ if eq $cert_host ( printf "%s/" $server_name ) }}
 server {
   access_log /var/log/nginx/access.log my_log;
@@ -82,15 +82,15 @@ server {
   server_name {{ $server_name }};
   listen 443 ssl;
 
-  {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%skey" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%sdhparams" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
@@ -162,7 +162,7 @@ server {
 {{ end }}
 
 {{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service.Name $server_name.Value ) ) }}
-{{ range $cert_host := secrets ( printf "%s/" ( env "VAULT_PATH" ) ) }}
+{{ range $cert_host := secrets ( printf "%s/" "secret/certificates" ) }}
 {{ if eq $cert_host ( printf "%s/" $server_name.Value ) }}
 server {
   access_log /var/log/nginx/access.log my_log;
@@ -177,15 +177,15 @@ server {
   server_name {{ $server_name.Value }};
 {{ end }}
 
-  {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%skey" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%sdhparams" ( env "VAULT_PATH" ) $cert_host )}}
+  {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
   {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
