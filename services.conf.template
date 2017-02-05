@@ -217,4 +217,8 @@ server {
 
 {{ end }}
 
+{{ if ne ( key_or_default ( printf "config/%s/nginx/servers" $service.Name ) "0" ) "0" }}
+{{ key ( printf "config/%s/nginx/servers" $service.Name ) }}
+{{ end }}
+
 {{ end }}{{ end }}{{ end }}{{ end }}{{ end }}
