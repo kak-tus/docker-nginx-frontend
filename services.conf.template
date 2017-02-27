@@ -12,51 +12,47 @@ server {
 
 resolver 172.18.0.1;
 
-{{ range $dc := datacenters }}
-{{ range $services := services ( printf "@%s" $dc ) }}
-{{ range $service := service ( printf "%s@%s" $services.Name $dc ) }}
-{{ if $service.Tags | contains "need-nginx" }}
-{{ if not ( scratch.Key ( printf "service_%s_" $service.Name ) ) }}
+{{ range $service_name := ls "config/nginx/services" }}
 
-{{ scratch.Set ( printf "service_%s_" $service.Name ) "1" }}
+{{ scratch.Set ( printf "service_%s_" $service_name.Key ) "1" }}
 
-upstream {{ $service.Name }}-upstream  {
-{{ if service $service.Name }}
-{{ range $service_local := service $service.Name }}
+upstream {{ $service_name.Key }}-upstream  {
+{{ if service $service_name.Key }}
+{{ range $service_local := service $service_name.Key }}
 {{ if gt $service_local.Port 0 }}
   server {{ $service_local.Address }}:{{ $service_local.Port }};
 {{ end }}
 {{ end }}
-{{ if keyExists ( printf "config/%s/port" $service.Name ) }}
-  server {{ if keyExists ( printf "config/%s/host" $service.Name ) }}{{ key ( printf "config/%s/host" $service.Name ) }}{{ else }}{{ $service.Name }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }} backup;
+{{ if keyExists ( printf "config/%s/port" $service_name.Key ) }}
+  server {{ if keyExists ( printf "config/%s/host" $service_name.Key ) }}{{ key ( printf "config/%s/host" $service_name.Key ) }}{{ else }}{{ $service_name.Key }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service_name.Key ) }} backup;
 {{ end }}
 {{ else }}
-{{ if keyExists ( printf "config/%s/port" $service.Name ) }}
-  server {{ if keyExists ( printf "config/%s/host" $service.Name ) }}{{ key ( printf "config/%s/host" $service.Name ) }}{{ else }}{{ $service.Name }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service.Name ) }};
+{{ if keyExists ( printf "config/%s/port" $service_name.Key ) }}
+  server {{ if keyExists ( printf "config/%s/host" $service_name.Key ) }}{{ key ( printf "config/%s/host" $service_name.Key ) }}{{ else }}{{ $service_name.Key }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service_name.Key ) }};
 {{ end }}
 {{ end }}
 }
 
-{{ if keyExists ( printf "config/%s/nginx/server_name" $service.Name ) }}
-{{ $server_name := key ( printf "config/%s/nginx/server_name" $service.Name ) }}
+{{ if keyExists ( printf "config/%s/nginx/server_name" $service_name.Key ) }}
+{{ $server_name := key ( printf "config/%s/nginx/server_name" $service_name.Key ) }}
 server {
   access_log /var/log/nginx/access.log my_log;
 
   server_name {{ $server_name }};
   listen 80;
 
-{{ if keyExists ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }}
-  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }};
+{{ if keyExists ( printf "config/%s/nginx/client_max_body_size" $service_name.Key ) }}
+  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service_name.Key ) }};
 {{ end }}
 
   location / {
-{{ if keyExists ( printf "config/%s/nginx/only_ssl" $service.Name ) }}
+{{ if keyExists ( printf "config/%s/nginx/only_ssl" $service_name.Key ) }}
 
     return 301 https://{{ $server_name }}$request_uri;
 
 {{ else }}
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name.Key ) "0" ) "1" }}
 {{ range ls "config/home_ips" }}
     allow {{ .Value }};
 {{ end }}
@@ -64,7 +60,7 @@ server {
 {{ end }}
 
     proxy_set_header Host $host;
-    proxy_pass http://{{ $service.Name }}-upstream;
+    proxy_pass http://{{ $service_name.Key }}-upstream;
 
 {{ end }}
   }
@@ -104,11 +100,11 @@ server {
   ssl_dhparam /etc/nginx/certificates/{{ $server_name }}/dhparams.pem;
   ssl_session_cache shared:{{ $server_name }}:10m;
 
-{{ if keyExists ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }}
-  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service.Name ) }};
+{{ if keyExists ( printf "config/%s/nginx/client_max_body_size" $service_name.Key ) }}
+  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service_name.Key ) }};
 {{ end }}
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name.Key ) "0" ) "1" }}
 {{ range ls "config/home_ips" }}
     allow {{ .Value }};
 {{ end }}
@@ -117,41 +113,41 @@ server {
 
   location / {
     proxy_set_header Host $host;
-    proxy_pass http://{{ $service.Name }}-upstream;
+    proxy_pass http://{{ $service_name.Key }}-upstream;
   }
 }
 {{ end }}{{ end }}
 {{ end }}
 
-{{ range $server_name := ls ( printf "config/%s/nginx/server_names" $service.Name ) }}
+{{ range $server_name := ls ( printf "config/%s/nginx/server_names" $service_name.Key ) }}
 
-{{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service.Name $server_name.Value ) ) }}
+{{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service_name.Key $server_name.Value ) ) }}
 server {
   access_log /var/log/nginx/access.log my_log;
 
   listen 80;
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service.Name $server_name.Value ) }}
-  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service.Name $server_name.Value ) }};
-{{ else if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) }}
-  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) }};
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service_name.Key $server_name.Value ) }}
+  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service_name.Key $server_name.Value ) }};
+{{ else if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) }}
+  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) }};
 {{ else }}
   server_name {{ $server_name.Value }};
 {{ end }}
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name.Key ) "0" ) "1" }}
 {{ range ls "config/home_ips" }}
   allow {{ .Value }};
 {{ end }}
   deny all;
 {{ end }}
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name.Key $server_name.Value ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name.Key $server_name.Value ) }}
 {{ end }}
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service.Name $server_name.Value ) }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service.Name $server_name.Value ) }}
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service_name.Key $server_name.Value ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_http" $service_name.Key $server_name.Value ) }}
 {{ end }}
 
   location /.well-known/acme-challenge/ {
@@ -163,7 +159,7 @@ server {
 }
 {{ end }}
 
-{{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service.Name $server_name.Value ) ) }}
+{{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service_name.Key $server_name.Value ) ) }}
 {{ range $cert_host := secrets ( printf "%s/" "secret/certificates" ) }}
 {{ if eq $cert_host ( printf "%s/" $server_name.Value ) }}
 server {
@@ -171,10 +167,10 @@ server {
 
   listen 443 ssl;
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service.Name $server_name.Value ) }}
-  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service.Name $server_name.Value ) }};
-{{ else if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) }}
-  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service.Name $server_name.Value ) }};
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service_name.Key $server_name.Value ) }}
+  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service_name.Key $server_name.Value ) }};
+{{ else if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) }}
+  server_name {{ key ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) }};
 {{ else }}
   server_name {{ $server_name.Value }};
 {{ end }}
@@ -199,19 +195,19 @@ server {
   ssl_dhparam /etc/nginx/certificates/{{ $server_name.Value }}/dhparams.pem;
   ssl_session_cache shared:{{ $server_name.Value }}:10m;
 
-{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service.Name ) "0" ) "1" }}
+{{ if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name.Key ) "0" ) "1" }}
 {{ range ls "config/home_ips" }}
   allow {{ .Value }};
 {{ end }}
   deny all;
 {{ end }}
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service.Name $server_name.Value ) }}
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name.Key $server_name.Value ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name.Key $server_name.Value ) }}
 {{ end }}
 
-{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service.Name $server_name.Value ) }}
-{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service.Name $server_name.Value ) }}
+{{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service_name.Key $server_name.Value ) }}
+{{ key ( printf "config/%s/nginx/server_name_configs/%s/config_https" $service_name.Key $server_name.Value ) }}
 {{ end }}
 
 }
@@ -219,4 +215,4 @@ server {
 
 {{ end }}
 
-{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}
+{{ end }}
