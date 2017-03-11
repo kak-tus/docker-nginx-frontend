@@ -1,0 +1,3 @@
+{{ range $service_name := ls "config/nginx/services" }}
+{{- $service_name.Key }}.weave.local
+{{ end }}

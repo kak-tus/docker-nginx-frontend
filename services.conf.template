@@ -18,18 +18,31 @@ resolver 172.18.0.1;
 
 upstream {{ $service_name.Key }}-upstream  {
 {{ if service $service_name.Key }}
-{{ range $service_local := service $service_name.Key }}
-{{ if gt $service_local.Port 0 }}
-  server {{ $service_local.Address }}:{{ $service_local.Port }};
-{{ end }}
-{{ end }}
-{{ if keyExists ( printf "config/%s/port" $service_name.Key ) }}
-  server {{ if keyExists ( printf "config/%s/host" $service_name.Key ) }}{{ key ( printf "config/%s/host" $service_name.Key ) }}{{ else }}{{ $service_name.Key }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service_name.Key ) }} backup;
-{{ end }}
+  {{ range $service_local := service $service_name.Key }}
+    {{ if gt $service_local.Port 0 }}
+      server {{ $service_local.Address }}:{{ $service_local.Port }};
+    {{ end }}
+  {{ end }}
+
+  {{ if $service_name.Key | printf "config/%s/port" | keyExists }}
+    server {{ if $service_name.Key | printf "config/%s/host" | keyExists }}
+      {{- with $service_name.Key | printf "config/%s/host" | key }}
+        {{- . | printf "/tmp/resolve/%s.weave.local" | file }}
+      {{- end }}
+    {{- else }}
+      {{- $service_name.Key | printf "/tmp/resolve/%s.weave.local" | file }}
+    {{- end }}:{{ $service_name.Key | printf "config/%s/port" | key }} backup;
+  {{ end }}
 {{ else }}
-{{ if keyExists ( printf "config/%s/port" $service_name.Key ) }}
-  server {{ if keyExists ( printf "config/%s/host" $service_name.Key ) }}{{ key ( printf "config/%s/host" $service_name.Key ) }}{{ else }}{{ $service_name.Key }}{{ end }}.weave.local:{{ key ( printf "config/%s/port" $service_name.Key ) }};
-{{ end }}
+  {{ if $service_name.Key | printf "config/%s/port" | keyExists }}
+    server {{ if $service_name.Key | printf "config/%s/host" | keyExists }}
+      {{- with $service_name.Key | printf "config/%s/host" | key }}
+        {{- . | printf "/tmp/resolve/%s.weave.local" | file }}
+      {{- end }}
+    {{- else }}
+      {{- $service_name.Key | printf "/tmp/resolve/%s.weave.local" | file }}
+    {{- end }}:{{ $service_name.Key | printf "config/%s/port" | key }};
+  {{ end }}
 {{ end }}
 }
 
@@ -81,15 +94,15 @@ server {
   listen 443 ssl;
 
   {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
@@ -176,15 +189,15 @@ server {
 {{ end }}
 
   {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
-  {{ plugin "store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
+  {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;

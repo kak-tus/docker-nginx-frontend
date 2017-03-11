@@ -17,6 +17,11 @@ template {
   destination = "/etc/nginx/stream.conf"
 }
 
+template {
+  source = "/root/resolve_services.conf.template"
+  destination = "/etc/resolve/services.conf"
+}
+
 exec {
   command = "nginx -g 'daemon off;'"
   splay = "60s"

@@ -8,7 +8,7 @@ RUN rm /etc/nginx/conf.d/default.conf \
   && mkdir -p /etc/nginx/certificates \
   && mkdir -p /var/lib/nginx/cache \
 
-  && apk add --update-cache curl unzip \
+  && apk add --update-cache curl unzip drill \
 
   && cd /usr/local/bin \
   && curl -L https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip -o consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip \
@@ -32,5 +32,8 @@ COPY store.sh /usr/local/bin/store.sh
 COPY cache.flag.template /root/cache.flag.template
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY stream.conf.template /root/stream.conf.template
+COPY resolve.sh /usr/local/bin/resolve.sh
+COPY start.sh /usr/local/bin/start.sh
+COPY resolve_services.conf.template /root/resolve_services.conf.template
 
-CMD consul-template -config /root/nginx.hcl
+CMD [ "/usr/local/bin/start.sh" ]
