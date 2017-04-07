@@ -1,10 +1,6 @@
 proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=nginx_cache:30m inactive=30d max_size=1G;
 
-log_format my_log '$remote_addr $host "$request" $status $bytes_sent "$http_referer" "$http_user_agent"';
-access_log off;
-
 server {
-  access_log /var/log/nginx/access.log my_log;
   listen 80 default_server;
   server_name _;
   return 444;
@@ -49,8 +45,6 @@ upstream {{ $service_name.Key }}-upstream  {
 {{ if keyExists ( printf "config/%s/nginx/server_name" $service_name.Key ) }}
 {{ $server_name := key ( printf "config/%s/nginx/server_name" $service_name.Key ) }}
 server {
-  access_log /var/log/nginx/access.log my_log;
-
   server_name {{ $server_name }};
   listen 80;
 
@@ -85,23 +79,21 @@ server {
   }
 }
 
-{{ range $cert_host := secrets ( printf "%s/" "secret/certificates" ) }}
+{{ range $cert_host := env "VAULT_PATH" | printf "%s/" | secrets }}
 {{ if eq $cert_host ( printf "%s/" $server_name ) }}
 server {
-  access_log /var/log/nginx/access.log my_log;
-
   server_name {{ $server_name }};
   listen 443 ssl;
 
-  {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%skey" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%sdhparams" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
@@ -136,8 +128,6 @@ server {
 
 {{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service_name.Key $server_name.Value ) ) }}
 server {
-  access_log /var/log/nginx/access.log my_log;
-
   listen 80;
 
 {{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_http" $service_name.Key $server_name.Value ) }}
@@ -173,11 +163,9 @@ server {
 {{ end }}
 
 {{ if or ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name" $service_name.Key $server_name.Value ) ) ( keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service_name.Key $server_name.Value ) ) }}
-{{ range $cert_host := secrets ( printf "%s/" "secret/certificates" ) }}
+{{ range $cert_host := env "VAULT_PATH" | printf "%s/" | secrets }}
 {{ if eq $cert_host ( printf "%s/" $server_name.Value ) }}
 server {
-  access_log /var/log/nginx/access.log my_log;
-
   listen 443 ssl;
 
 {{ if keyExists ( printf "config/%s/nginx/server_name_configs/%s/server_name_https" $service_name.Key $server_name.Value ) }}
@@ -188,15 +176,15 @@ server {
   server_name {{ $server_name.Value }};
 {{ end }}
 
-  {{ with secret ( printf "%s/%sfullchain" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%sfullchain" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/fullchain.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%skey" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%skey" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/key.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
-  {{ with secret ( printf "%s/%sdhparams" "secret/certificates" $cert_host )}}
+  {{ with secret ( printf "%s/%sdhparams" ( env "VAULT_PATH" ) $cert_host )}}
   {{ plugin "/usr/local/bin/store.sh" ( printf "/etc/nginx/certificates/%s/dhparams.pem" $server_name.Value ) ( printf "%s" .Data.value ) }}
   {{ end }}
 
