@@ -1,17 +1,14 @@
 #!/usr/bin/env sh
 
-/usr/local/bin/consul-template -once -template "/root/resolve_services.conf.template:/etc/resolve/services.conf"
+touch /etc/nginx/conf.d/services.conf
+touch /etc/nginx/stream.conf
 
-if [ "$?" != "0" ]; then
-  exit
-fi
+/usr/local/bin/resolve.sh
 
-/usr/local/bin/resolve.sh once
-
-/usr/local/bin/resolve.sh &
+crond -f &
 child1=$!
 
-/usr/local/bin/consul-template -config /root/nginx.hcl &
+nginx -g 'daemon off;' &
 child2=$!
 
 trap "kill $child1 ; kill $child2" SIGTERM SIGINT

@@ -1,26 +1,29 @@
 #!/usr/bin/env sh
 
-mkdir -p /tmp/resolve
+/usr/local/bin/consul-template -config /root/nginx.hcl -once
 
-while true; do
+if [ "$?" != "0" ]; then
+  exit
+fi
 
-  while read -r line; do
-    name="$line"
+changed="0"
 
-    if [ -n "$name" ]; then
-      ip=$( drill "$name" | fgrep IN | fgrep -v ';' | awk '{print $5}' | grep -E -o '^[0-9\.]+$' )
+diff=`diff /tmp/services.conf /etc/nginx/conf.d/services.conf`
 
-      if [ -n "$ip" ]; then
-        echo -n $name > "/tmp/resolve/$name"
-      else
-        echo -n '127.0.0.1' > "/tmp/resolve/$name"
-      fi
-    fi
-  done < "/etc/resolve/services.conf"
+if [ -n "$diff" ]; then
+  echo "services changed"
+  changed="1"
+  cp /tmp/services.conf /etc/nginx/conf.d/services.conf
+fi
 
-  if [ -n "$1" ]; then
-    exit 0
-  fi
+diff=`diff /tmp/stream.conf /etc/nginx/stream.conf`
 
-  sleep 60
-done
+if [ -n "$diff" ]; then
+  echo "stream changed"
+  changed="1"
+  cp /tmp/stream.conf /etc/nginx/stream.conf
+fi
+
+if [ "$changed" = "1" ]; then
+  nginx -s reload
+fi
