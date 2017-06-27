@@ -14,6 +14,7 @@ resolver 172.18.0.1;
       {{- if not ( scratch.Key "acme" ) }}
         {{- scratch.Set "acme" "1" }}
         location /.well-known/acme-challenge/ {
+          allow all;
           proxy_set_header Host $host;
           proxy_pass http://{{ $s.Address }}:{{ $s.Port }};
         }
@@ -22,6 +23,14 @@ resolver 172.18.0.1;
   {{- end }}
 {{- end }}
 {{- $template_acme := executeTemplate "template_acme" }}
+
+{{- define "template_access" }}
+  {{- range ls "config/home_ips" }}
+      allow {{ .Value }};
+  {{- end }}
+  deny all;
+{{- end }}
+{{- $template_access := executeTemplate "template_access" }}
 
 {{- range $dc := datacenters }}
 {{- range $services := services ( printf "@%s" $dc ) }}
@@ -67,26 +76,23 @@ server {
   server_name {{ $server_name }};
   listen 80;
 
-{{- if keyExists ( printf "config/%s/nginx/client_max_body_size" $service_name ) }}
-  client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service_name ) }};
-{{- end }}
+  {{- if keyExists ( printf "config/%s/nginx/client_max_body_size" $service_name ) }}
+    client_max_body_size {{ key ( printf "config/%s/nginx/client_max_body_size" $service_name ) }};
+  {{- end }}
 
   location / {
-{{- if keyExists ( printf "config/%s/nginx/only_ssl" $service_name ) }}
-    return 301 https://{{ $server_name }}$request_uri;
-{{- else }}
+    {{- if keyExists ( printf "config/%s/nginx/only_ssl" $service_name ) }}
+        return 301 https://{{ $server_name }}$request_uri;
+    {{- else }}
 
-{{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
-{{- range ls "config/home_ips" }}
-    allow {{ .Value }};
-{{- end }}
-    deny all;
-{{- end }}
+      {{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
+        {{ $template_access }}
+      {{- end }}
 
-    proxy_set_header Host $host;
-    proxy_pass http://{{ $service_name }}-upstream;
+      proxy_set_header Host $host;
+      proxy_pass http://{{ $service_name }}-upstream;
 
-{{- end }}
+    {{- end }}
   }
 
   {{- $template_acme }}
@@ -124,11 +130,7 @@ server {
 {{- end }}
 
 {{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
-
-{{- range ls "config/home_ips" }}
-    allow {{ .Value }};
-{{- end }}
-    deny all;
+  {{ $template_access }}
 {{- end }}
 
   location / {
@@ -155,10 +157,7 @@ server {
 {{- end }}
 
 {{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
-{{- range ls "config/home_ips" }}
-  allow {{ .Value }};
-{{- end }}
-  deny all;
+  {{ $template_access }}
 {{- end }}
 
 {{- if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name $server_name.Value ) }}
@@ -209,10 +208,7 @@ server {
   ssl_session_cache shared:{{ $server_name.Value }}:10m;
 
 {{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
-{{- range ls "config/home_ips" }}
-  allow {{ .Value }};
-{{- end }}
-  deny all;
+  {{ $template_access }}
 {{- end }}
 
 {{- if keyExists ( printf "config/%s/nginx/server_name_configs/%s/config" $service_name $server_name.Value ) }}
