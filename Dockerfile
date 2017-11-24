@@ -1,7 +1,7 @@
-FROM nginx:1.12.0-alpine
+FROM nginx:1.12.2-alpine
 
-ENV CONSUL_TEMPLATE_VERSION=0.18.5
-ENV CONSUL_TEMPLATE_SHA256=b0cd6e821d6150c9a0166681072c12e906ed549ef4588f73ed58c9d834295cd2
+ENV CONSUL_TEMPLATE_VERSION=0.19.4
+ENV CONSUL_TEMPLATE_SHA256=5f70a7fb626ea8c332487c491924e0a2d594637de709e5b430ecffc83088abc0
 
 RUN \
   rm /etc/nginx/conf.d/default.conf \
@@ -27,15 +27,16 @@ ENV CONSUL_TOKEN=
 ENV VAULT_ADDR=
 ENV VAULT_TOKEN=
 
-ENV VAULT_PATH=secret/certificates
+ENV SET_CONTAINER_TIMEZONE=true
+ENV CONTAINER_TIMEZONE=Europe/Moscow
 
-COPY services.conf.template /root/services.conf.template
+ENV VAULT_PATH=secret/certificates
+ENV NGINX_WORKER_CONNECTIONS=1024
+
 COPY nginx.hcl /root/nginx.hcl
 COPY store.sh /usr/local/bin/store.sh
-COPY cache.flag.template /root/cache.flag.template
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY stream.conf.template /root/stream.conf.template
 COPY resolve.sh /usr/local/bin/resolve.sh
 COPY start.sh /usr/local/bin/start.sh
+COPY templates /root/templates
 
 CMD ["/usr/local/bin/start.sh"]
