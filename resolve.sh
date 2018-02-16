@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-/usr/local/bin/consul-template -config /root/nginx.hcl -once
+/usr/local/bin/consul-template -config /root/templates/service.hcl -once
 
 if [ "$?" != "0" ]; then
   exit
