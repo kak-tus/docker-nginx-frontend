@@ -36,7 +36,7 @@ upstream {{ $service_name }}-upstream  {
 
 server {
 
-{{- if eq ( key_or_default ( printf "config/%s/nginx/restrict" $service_name ) "0" ) "1" }}
+{{- if keyExists ( printf "config/%s/nginx/restrict" $service_name ) }}
 {{- range ls "config/home_ips" }}
   allow {{ .Value }};
 {{- end }}
