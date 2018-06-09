@@ -15,7 +15,7 @@ server {
 }
 
 {{- define "template_acme" }}
-  {{- range $dc := datacenters }}
+  {{- range $dc := datacenters true }}
     {{- range $s := $dc | printf "nginx-acme@%s" | service }}
       {{- if not ( scratch.Key "acme" ) }}
         {{- scratch.Set "acme" "1" }}
@@ -38,7 +38,7 @@ server {
 {{- end }}
 {{- $template_access := executeTemplate "template_access" }}
 
-{{- range $dc := datacenters }}
+{{- range $dc := datacenters true }}
 {{- range $services := services ( printf "@%s" $dc ) }}
 {{- range $service := service ( printf "%s@%s" $services.Name $dc ) }}
 {{- if $service.Tags | contains "need-nginx" }}
@@ -55,7 +55,7 @@ upstream {{ $service_name }}-upstream  {
     {{- end }}
   {{- end }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ $service_local.Address }}:{{ $service_local.Port }} backup;
@@ -63,7 +63,7 @@ upstream {{ $service_name }}-upstream  {
 
 {{- else }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ if $service_local.Address | printf "config/nginx/map/%s" | keyExists }}
@@ -83,7 +83,7 @@ upstream {{ $service_name }}-all-upstream  {
     {{- end }}
   {{- end }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ $service_local.Address }}:{{ $service_local.Port }};
@@ -91,7 +91,7 @@ upstream {{ $service_name }}-all-upstream  {
 
 {{- else }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ if $service_local.Address | printf "config/nginx/map/%s" | keyExists }}
@@ -113,7 +113,7 @@ upstream {{ $service_name }}-local-upstream  {
 
 {{- else }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ if $service_local.Address | printf "config/nginx/map/%s" | keyExists }}
@@ -128,7 +128,7 @@ upstream {{ $service_name }}-local-upstream  {
 upstream {{ $service_name }}-remote-upstream  {
 {{- if service $service_name }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ $service_local.Address }}:{{ $service_local.Port }};
@@ -136,7 +136,7 @@ upstream {{ $service_name }}-remote-upstream  {
 
 {{- else }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ if $service_local.Address | printf "config/nginx/map/%s" | keyExists }}

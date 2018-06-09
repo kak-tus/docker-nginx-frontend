@@ -1,4 +1,4 @@
-{{- range $dc := datacenters }}
+{{- range $dc := datacenters true }}
 {{- range $services := services ( printf "@%s" $dc ) }}
 {{- range $service := service ( printf "%s@%s" $services.Name $dc ) }}
 {{- if $service.Tags | contains "need-nginx-stream" }}
@@ -15,7 +15,7 @@ upstream {{ $service_name }}-upstream  {
     {{- end }}
   {{- end }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ $service_local.Address }}:{{ $service_local.Port }} backup;
@@ -23,7 +23,7 @@ upstream {{ $service_name }}-upstream  {
 
 {{- else }}
 
-  {{- range $dc_local := datacenters }}
+  {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
     server {{ $service_local.Address }}:{{ $service_local.Port }};
