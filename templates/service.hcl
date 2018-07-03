@@ -4,7 +4,7 @@ log_level = "err"
 
 template {
   source = "/root/templates/services.conf.template"
-  destination = "/tmp/services.conf"
+  destination = "/etc/nginx/conf.d/services.conf"
 }
 
 template {
@@ -15,10 +15,17 @@ template {
 
 template {
   source = "/root/templates/stream.conf.template"
-  destination = "/tmp/stream.conf"
+  destination = "/etc/nginx/stream.conf"
 }
 
 template {
   source = "/root/templates/nginx.conf.template"
   destination = "/etc/nginx/nginx.conf"
+}
+
+exec {
+  command = "nginx -g 'daemon off;'"
+  splay = "10s"
+  reload_signal = "SIGHUP"
+  kill_signal = "SIGQUIT"
 }
