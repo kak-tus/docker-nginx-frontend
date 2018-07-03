@@ -1,5 +1,7 @@
 max_stale = "2m"
 
+log_level = "err"
+
 template {
   source = "/root/templates/services.conf.template"
   destination = "/tmp/services.conf"
