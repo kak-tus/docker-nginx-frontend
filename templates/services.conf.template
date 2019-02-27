@@ -41,7 +41,7 @@ server {
 {{- range $dc := datacenters true }}
 {{- range $services := services ( printf "@%s" $dc ) }}
 {{- range $service := service ( printf "%s@%s" $services.Name $dc ) }}
-{{- if $service.Tags | contains "need-nginx" }}
+{{- if $service.Tags | contains ( env "NGINX_SERVICES_FILTER" | printf "need-nginx%s" ) }}
 {{- $service_name := $service.Name }}
 {{- if not ( scratch.Key ( printf "service_%s_" $service_name ) ) }}
 
