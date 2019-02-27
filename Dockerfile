@@ -34,8 +34,9 @@ ENV \
   SET_CONTAINER_TIMEZONE=true \
   CONTAINER_TIMEZONE=Europe/Moscow \
   \
-  VAULT_PATH=secret/certificates \
-  NGINX_WORKER_CONNECTIONS=1024
+  NGINX_VAULT_PATH=secret/certificates \
+  NGINX_WORKER_CONNECTIONS=1024 \
+  NGINX_WORKER_PROCESSES=1
 
 COPY --from=build /usr/local/bin/consul-template /usr/local/bin/consul-template
 COPY store.sh /usr/local/bin/store.sh

@@ -1,6 +1,6 @@
 
 user  nginx;
-worker_processes  1;
+worker_processes  {{ env "NGINX_WORKER_PROCESSES" }};
 worker_rlimit_nofile {{ env "NGINX_WORKER_CONNECTIONS" | parseUint | multiply 2 | add 100 }};
 
 error_log  /var/log/nginx/error.log warn;
