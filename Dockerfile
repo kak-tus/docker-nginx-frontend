@@ -15,7 +15,7 @@ RUN \
   && unzip consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip \
   && rm consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip
 
-FROM nginx:1.15.0-alpine
+FROM nginx:1.15.8-alpine
 
 RUN \
   apk add --no-cache \
