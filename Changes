@@ -1,0 +1,3 @@
+2019-03-05 v1.0.1
+  - Ability to load some extended configuration from Consul from key
+    config/nginx/extended.

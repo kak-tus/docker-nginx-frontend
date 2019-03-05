@@ -23,6 +23,11 @@ template {
   destination = "/etc/nginx/nginx.conf"
 }
 
+template {
+  source = "/root/templates/ext.conf.template"
+  destination = "/etc/nginx/conf.d/ext.conf"
+}
+
 exec {
   command = "nginx -g 'daemon off;'"
   splay = "10s"
