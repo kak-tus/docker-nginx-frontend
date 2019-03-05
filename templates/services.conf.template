@@ -1,12 +1,6 @@
 proxy_cache_path /var/lib/nginx/cache levels=1:2 keys_zone=nginx_cache:30m inactive=30d max_size=1G;
 
 server {
-  listen 80 default_server;
-  server_name _;
-  return 444;
-}
-
-server {
   listen 80;
   server_name fake-server-for-stat.dd;
   location /stat {

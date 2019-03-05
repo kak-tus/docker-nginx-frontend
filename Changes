@@ -1,3 +1,6 @@
+2019-03-06 v1.0.3
+  - Remove "default_server" section.
+
 2019-03-06 v1.0.2
   - Allow to set key name in Consul, to load extended configuration.
     Env variable NGINX_EXT_KEY.
