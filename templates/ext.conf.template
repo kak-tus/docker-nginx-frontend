@@ -1,3 +1,3 @@
-{{ if keyExists "config/nginx/extended" }}
-  {{ key "config/nginx/extended" }}
+{{ if keyExists ( env "NGINX_EXT_KEY" ) }}
+  {{ key ( env "NGINX_EXT_KEY" ) }}
 {{ end }}
