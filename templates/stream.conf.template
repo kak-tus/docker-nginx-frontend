@@ -11,7 +11,7 @@ upstream {{ $service_name }}-upstream  {
 {{- if service $service_name }}
   {{- range $service_local := service $service_name }}
     {{- if gt $service_local.Port 0 }}
-      server {{ $service_local.Address }}:{{ $service_local.Port }}{{ if keyExists ( printf "config/%s/nginx/stream_configs/%s/no_fails" $service_name $server.Value ) }} max_fails=0{{ end }};
+      server {{ $service_local.Address }}:{{ $service_local.Port }}{{ if keyExists ( printf "config/%s/nginx/no_fails" $service_name ) }} max_fails=0{{ end }};
     {{- end }}
   {{- end }}
 
@@ -26,7 +26,7 @@ upstream {{ $service_name }}-upstream  {
   {{- range $dc_local := datacenters true }}
   {{- range $service_local := service ( printf "%s@%s" $service_name $dc_local ) }}
   {{- if gt $service_local.Port 0 }}
-    server {{ $service_local.Address }}:{{ $service_local.Port }}{{ if keyExists ( printf "config/%s/nginx/stream_configs/%s/no_fails" $service_name $server.Value ) }} max_fails=0{{ end }};
+    server {{ $service_local.Address }}:{{ $service_local.Port }}{{ if keyExists ( printf "config/%s/nginx/no_fails" $service_name ) }} max_fails=0{{ end }};
   {{- end }}{{ end }}{{ end }}
 
 {{- end }}
